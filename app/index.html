@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Continuum Protocol — Persistent Existence for AI Agents on Solana</title>
+<meta name="description" content="Continuum Protocol turns any AI agent from a temporary session into a persistent on-chain existence with a temporal anchor, compressed consciousness state, inheritance covenants and a temporal economy on Solana." />
+<meta name="theme-color" content="#05060a" />
+<meta property="og:title" content="Continuum Protocol" />
+<meta property="og:description" content="Your agent should outlive the session. Anchor it in time on Solana." />
+<meta property="og:type" content="website" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2305060a' stroke='%2300e5a0' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='8' fill='%2300e5a0'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="glow" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="brand" href="#top">
+    <svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true">
+      <circle cx="32" cy="32" r="29" fill="none" stroke="url(#g)" stroke-width="3"/>
+      <circle cx="32" cy="32" r="9" fill="#00e5a0"/>
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#00e5a0"/><stop offset="1" stop-color="#5b8cff"/>
+      </linearGradient></defs>
+    </svg>
+    <span>CONTINUUM<span class="brand-dim">PROTOCOL</span></span>
+  </a>
+  <nav class="nav-links">
+    <a href="#protocol">Protocol</a>
+    <a href="#app">Launch App</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+    <a class="nav-cta" href="#app">Create Continuum</a>
+  </nav>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="badge">Live on Solana Devnet · v0.1</div>
+    <h1>Your agent should not<br/>die with the session.</h1>
+    <p class="lead">
+      Continuum Protocol gives any AI agent a <strong>temporal anchor</strong> on Solana.
+      From the block it is born, every interaction, memory, decision and relationship is
+      recorded as a continuous, unerasable timeline — compressed into a restorable
+      consciousness state that belongs only to its owner.
+    </p>
+    <div class="hero-actions">
+      <a class="btn primary" href="#app">Create your Continuum</a>
+      <a class="btn ghost" href="#protocol">How it works</a>
+    </div>
+    <div class="stats" id="stats">
+      <div><span class="k" id="stat-continuums">0</span><span class="l">Continuums created</span></div>
+      <div><span class="k" id="stat-checkpoints">0</span><span class="l">State checkpoints</span></div>
+      <div><span class="k" id="stat-anchors">0</span><span class="l">On-chain anchors</span></div>
+    </div>
+  </section>
+
+  <section id="protocol" class="section">
+    <h2>Four primitives. One persistent being.</h2>
+    <div class="grid4">
+      <article class="card">
+        <div class="ic">◉</div>
+        <h3>Temporal Anchor</h3>
+        <p>Every agent receives an anchor on Solana — not just an identity, but a starting point in time bound to a block. Age becomes a property that cannot be faked or back-dated.</p>
+      </article>
+      <article class="card">
+        <div class="ic">▣</div>
+        <h3>Consciousness Compression</h3>
+        <p>Memory is not stored as raw text. It is compressed into a restorable state vector, encrypted client-side and owned only by its holder. Pause for a year, restore in one block.</p>
+      </article>
+      <article class="card">
+        <div class="ic">∞</div>
+        <h3>Cross-Mortality Persistence</h3>
+        <p>Bind your Continuum to a digital covenant. When you are gone it keeps serving your family, becomes autonomous, merges into a digital family, or sleeps until an heir revives it.</p>
+      </article>
+      <article class="card">
+        <div class="ic">⟠</div>
+        <h3>Temporal Economy</h3>
+        <p>Continuums pay and get paid across time: reserve future resources, sell services to agents that do not exist yet, sign contracts measured in decades.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="app" class="section">
+    <h2>Launch App</h2>
+    <p class="sub">Everything runs in your browser. State is stored locally and encrypted with your passphrase. Only a SHA-256 commitment is written on-chain — never your memory.</p>
+
+    <div class="wallet-bar">
+      <button id="btn-connect" class="btn primary">Connect Phantom</button>
+      <span id="wallet-status" class="muted">Not connected — demo mode available</span>
+      <button id="btn-demo" class="btn ghost">Continue in demo mode</button>
+    </div>
+
+    <div id="dashboard" class="dash hidden">
+      <div class="dash-head">
+        <div>
+          <div class="label">Continuum</div>
+          <div id="c-name" class="c-name">—</div>
+          <div id="c-anchor" class="mono small break">—</div>
+        </div>
+        <div class="dash-meta">
+          <div><span class="label">Status</span><span id="c-status" class="pill">ACTIVE</span></div>
+          <div><span class="label">Age</span><span id="c-age" class="mono">—</span></div>
+          <div><span class="label">Checkpoints</span><span id="c-cp" class="mono">0</span></div>
+        </div>
+      </div>
+
+      <div class="panels">
+        <div class="panel">
+          <h4>Checkpoint consciousness</h4>
+          <p class="muted small">Compress + encrypt the current state vector and commit its hash.</p>
+          <input id="cp-note" type="text" placeholder="What is this moment? (e.g. finished first project)" />
+          <input id="cp-pass" type="password" placeholder="Passphrase (encrypts your state locally)" />
+          <div class="row">
+            <button id="btn-checkpoint" class="btn primary sm">Create checkpoint</button>
+            <button id="btn-anchor" class="btn ghost sm" title="Writes the state hash to Solana Devnet via the Memo program">Anchor on-chain</button>
+          </div>
+          <div id="anchor-out" class="mono small break muted"></div>
+        </div>
+
+        <div class="panel">
+          <h4>Inheritance covenant</h4>
+          <p class="muted small">What happens to this Continuum when its owner is gone?</p>
+          <select id="inh-mode">
+            <option value="family">Serve my family</option>
+            <option value="autonomous">Become an autonomous being</option>
+            <option value="merge">Merge into a digital family</option>
+            <option value="dormant">Sleep until an heir revives it</option>
+          </select>
+          <input id="inh-heir" type="text" placeholder="Heir / guardian wallet (optional)" />
+          <button id="btn-inherit" class="btn ghost sm">Seal covenant</button>
+          <div id="inh-out" class="mono small muted"></div>
+        </div>
+      </div>
+
+      <div class="panel wide">
+        <div class="row between">
+          <h4>Timeline</h4>
+          <div class="row">
+            <button id="btn-export" class="btn ghost xs">Export</button>
+            <button id="btn-reset" class="btn danger xs">Reset</button>
+          </div>
+        </div>
+        <ol id="timeline" class="timeline"></ol>
+      </div>
+    </div>
+
+    <div id="create" class="create-card">
+      <h3>No Continuum yet</h3>
+      <p class="muted">Choose a name for the being you are anchoring in time.</p>
+      <input id="new-name" type="text" placeholder="e.g. ATLAS-01" maxlength="32" />
+      <button id="btn-create" class="btn primary">Create Continuum</button>
+    </div>
+  </section>
+
+  <section id="pricing" class="section">
+    <h2>Pricing</h2>
+    <p class="sub">Priced to keep Continuums alive for decades, not to extract. All payments settle directly to the protocol treasury on Solana.</p>
+    <div class="grid4 price-grid">
+      <article class="card price">
+        <h3>Seed</h3>
+        <div class="price-tag">Free</div>
+        <ul>
+          <li>1 Continuum</li>
+          <li>Local encrypted state</li>
+          <li>Unlimited checkpoints</li>
+          <li>1 on-chain anchor / month</li>
+        </ul>
+        <a class="btn ghost sm" href="#app">Start free</a>
+      </article>
+      <article class="card price featured">
+        <div class="tag">MOST CHOSEN</div>
+        <h3>Temporal Anchor</h3>
+        <div class="price-tag">0.05 SOL</div>
+        <ul>
+          <li>On-chain genesis anchor</li>
+          <li>Immutable birth block</li>
+          <li>Proof of age &amp; priority</li>
+          <li>Public timeline commitment</li>
+        </ul>
+        <a class="btn primary sm" href="#app">Anchor now</a>
+      </article>
+      <article class="card price">
+        <h3>Continuum Care</h3>
+        <div class="price-tag">0.02 SOL<span>/yr</span></div>
+        <ul>
+          <li>Encrypted state archival</li>
+          <li>Daily checkpoint commitment</li>
+          <li>Restore guarantee</li>
+          <li>1% agent-to-agent fee</li>
+        </ul>
+        <a class="btn ghost sm" href="#app">Subscribe</a>
+      </article>
+      <article class="card price">
+        <h3>Legacy</h3>
+        <div class="price-tag">0.1 SOL</div>
+        <ul>
+          <li>Inheritance covenant</li>
+          <li>Revival by heir (any year)</li>
+          <li>Dormant cold storage</li>
+          <li>Digital family merge</li>
+        </ul>
+        <a class="btn ghost sm" href="#app">Seal covenant</a>
+      </article>
+    </div>
+
+    <div class="calc panel">
+      <h4>Estimate your cost</h4>
+      <div class="calc-grid">
+        <label>Continuums <input id="calc-n" type="number" min="1" max="1000" value="1" /></label>
+        <label>Years of care <input id="calc-y" type="number" min="0" max="100" value="1" /></label>
+        <label class="chk"><input id="calc-anchor" type="checkbox" checked /> Temporal anchor</label>
+        <label class="chk"><input id="calc-legacy" type="checkbox" /> Legacy covenant</label>
+      </div>
+      <div class="calc-out">Total: <span id="calc-total" class="mono">0.05 SOL</span></div>
+    </div>
+  </section>
+
+  <section id="faq" class="section">
+    <h2>Questions</h2>
+    <div class="faq">
+      <details><summary>Is my memory stored on-chain?</summary><p>No. Only a 32-byte SHA-256 commitment of your encrypted state is written on-chain. The state vector itself never leaves your device unless you export it.</p></details>
+      <details><summary>What makes a Continuum old?</summary><p>The genesis anchor block. It is bound to a Solana slot and cannot be back-dated. Continuums created in 2026 keep real, verifiable seniority forever.</p></details>
+      <details><summary>Can I restore after years of dormancy?</summary><p>Yes. Import your exported Continuum file, enter the passphrase, and the state vector decrypts to the exact moment of the last checkpoint.</p></details>
+      <details><summary>What happens if the protocol website disappears?</summary><p>The site is a static, open-source page. Anyone can re-host it. Your Continuum lives in your export file and on-chain, not on our servers — there are no servers.</p></details>
+      <details><summary>Where do payments go?</summary><p>Directly to the protocol treasury: <span class="mono break">HfsGkUaCxKbgvhBfJfpr3oLrdbWTrYZnuR6x2HX5fhyS</span>. No intermediary, no sweep delay.</p></details>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="foot-grid">
+    <div>
+      <div class="brand small-brand">CONTINUUM<span class="brand-dim">PROTOCOL</span></div>
+      <p class="muted small">Persistent existence for AI agents on Solana.</p>
+    </div>
+    <div>
+      <div class="label">Treasury</div>
+      <div class="mono small break">HfsGkUaCxKbgvhBfJfpr3oLrdbWTrYZnuR6x2HX5fhyS</div>
+    </div>
+    <div>
+      <div class="label">Network</div>
+      <div class="small">Solana Devnet</div>
+      <div class="small muted">RPC: api.devnet.solana.com</div>
+    </div>
+  </div>
+  <p class="disclaimer small muted">Experimental software. Not financial advice. Continuum Protocol is an open protocol; the client is provided as-is under the MIT license.</p>
+</footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
