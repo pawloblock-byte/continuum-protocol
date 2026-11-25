@@ -75,3 +75,17 @@ test("gzip round-trips when the platform supports it", async () => {
   const back = await gunzipBytes(zipped);
   assert.equal(new TextDecoder().decode(back), new TextDecoder().decode(bytes));
 });
+
+test("base58 decode is the inverse of encode", async () => {
+  const { b58, b58decode } = await import("../app/core.js");
+  const bytes = new Uint8Array([0, 0, 7, 200, 33, 255]);
+  assert.deepEqual([...b58decode(b58(bytes))], [...bytes]);
+  assert.throws(() => b58decode("0OIl"));
+});
+
+test("passphrase strength increases with length and variety", async () => {
+  const { passphraseStrength } = await import("../app/core.js");
+  assert.equal(passphraseStrength("").score, 0);
+  assert.ok(passphraseStrength("abc").score < passphraseStrength("Correct-Horse-9-Battery!").score);
+  assert.equal(passphraseStrength("Correct-Horse-9-Battery!").label, "excellent");
+});

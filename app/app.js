@@ -1,6 +1,7 @@
 import {
   b58, fmtAge, eventIcon, priceTotal, isValidContinuum,
   toB64, fromB64, sha256Hex, gzipBytes, sealBlob, wrapForOwner, wrapContentKeyForHeir, genRecoveryKey,
+  b58decode, passphraseStrength,
 } from "./core.js";
 
 const MEMO_PROGRAM_ID = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
@@ -188,6 +189,7 @@ async function anchorOnChain() {
       h: state.lastHash || state.anchor,
       n: state.name.slice(0, 24),
       t: Date.now(),
+      u: state.vaultUri || null,
     });
     const ix = new TransactionInstruction({
       keys: [{ pubkey: pk, isSigner: true, isWritable: false }],
@@ -287,6 +289,9 @@ function exportContinuum() {
   a.download = "continuum-" + state.name.replace(/[^a-z0-9]/gi, "_").toLowerCase() + ".json";
   a.click();
   URL.revokeObjectURL(a.href);
+  state.exportedAt = Date.now();
+  save();
+  render();
   toast("Exported. Keep this file and your passphrase safe.");
 }
 
@@ -314,6 +319,105 @@ function resetContinuum() {
   toast("Local Continuum cleared.");
 }
 
+function readinessItems() {
+  return [
+    { key: "born", label: "Continuum created", done: true },
+    { key: "anchor", label: "Anchor registered on Solana", done: Boolean(state.genesis?.sig) },
+    { key: "heir", label: "Heir recovery key sealed", done: Boolean(state.heirPub && state.lastSnapshot?.heir) },
+    { key: "covenant", label: "Inheritance covenant sealed", done: Boolean(state.covenant) },
+    {
+      key: "vault",
+      label: "Vault exported and located",
+      done: Boolean(state.exportedAt && state.vaultUri),
+    },
+  ];
+}
+
+function renderReadiness() {
+  if (!state) return;
+  const items = readinessItems();
+  const done = items.filter((i) => i.done).length;
+  $("ready-score").textContent = done + " / " + items.length;
+  const ul = $("ready-list");
+  ul.innerHTML = "";
+  items.forEach((i) => {
+    const li = document.createElement("li");
+    const m = document.createElement("span");
+    m.className = "mark " + (i.done ? "done" : "todo");
+    m.textContent = i.done ? "✓" : "✕";
+    const t = document.createElement("span");
+    t.textContent = i.label;
+    li.append(m, t);
+    ul.append(li);
+  });
+  const next = items.find((i) => !i.done);
+  const hints = {
+    anchor: "Next: press <b>Anchor on-chain</b> to register this Continuum's birth slot on Solana.",
+    heir: "Next: generate an <b>heir recovery key</b> and seal the covenant so your children can open the memory.",
+    covenant: "Next: choose what happens after you are gone and press <b>Seal covenant</b>.",
+    vault: "Next: <b>Export</b> the vault, upload it somewhere permanent, then paste its URL under <b>Durable vault</b>.",
+  };
+  $("next-step").innerHTML = next ? hints[next.key] || "" : "Everything is in place. This Continuum is ready to outlive you.";
+  $("next-step").classList.toggle("hidden", false);
+}
+
+async function verifyOnChain() {
+  if (!state?.genesis?.sig) {
+    toast("Nothing anchored yet — press Anchor on-chain first.", true);
+    return;
+  }
+  const out = $("verify-out");
+  out.textContent = "Reading the transaction from Solana…";
+  try {
+    const { Connection } = await import("https://esm.sh/@solana/web3.js@1.95.3");
+    const connection = new Connection(RPC_ENDPOINT, "confirmed");
+    const tx = await connection.getTransaction(state.genesis.sig, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
+    if (!tx) {
+      out.textContent = "Transaction not found on this cluster.";
+      return;
+    }
+    const msg = tx.transaction.message;
+    const keys = msg.accountKeys || msg.staticAccountKeys || [];
+    const list = msg.instructions || msg.compiledInstructions || [];
+    let memo = null;
+    for (const ix of list) {
+      const pid = ix.programId ? (ix.programId.toBase58 ? ix.programId.toBase58() : String(ix.programId)) : (keys[ix.programIdIndex]?.toBase58?.() ?? String(keys[ix.programIdIndex]));
+      if (pid !== MEMO_PROGRAM_ID) continue;
+      const raw = typeof ix.data === "string" ? b58decode(ix.data) : Uint8Array.from(ix.data);
+      memo = new TextDecoder().decode(raw);
+      break;
+    }
+    if (!memo) {
+      out.textContent = "Confirmed at slot " + tx.slot + ", but no memo could be parsed.";
+      return;
+    }
+    const m = JSON.parse(memo);
+    const okAnchor = m.a === state.anchor;
+    const okHash = !m.h || m.h === state.lastHash;
+    out.innerHTML =
+      (okAnchor && okHash ? "VERIFIED" : "MISMATCH") +
+      " · slot " + tx.slot +
+      " · anchor " + (okAnchor ? "matches" : "differs") +
+      " · hash " + (okHash ? "matches" : "differs") +
+      ' · <a target="_blank" rel="noopener" href="https://explorer.solana.com/tx/' + state.genesis.sig + '?cluster=devnet">explorer ↗</a>';
+  } catch (e) {
+    out.textContent = "Verification failed: " + (e?.message || e);
+  }
+}
+
+function saveVaultUri() {
+  if (!state) return;
+  const uri = ($("vault-uri").value || "").trim();
+  if (uri && !/^https?:\/\//.test(uri)) {
+    toast("Vault location must be an http(s) URL.", true);
+    return;
+  }
+  state.vaultUri = uri || null;
+  save();
+  render();
+  toast(uri ? "Vault location saved. It will be written into the next anchor." : "Vault location cleared.");
+}
+
 function render() {
   const dash = $("dashboard");
   const create = $("create");
@@ -337,6 +441,8 @@ function render() {
     status.textContent = "LOCAL";
     status.classList.add("dormant");
   }
+  $("vault-uri").value = state.vaultUri || "";
+  $("vault-out").textContent = state.vaultUri ? "Vault: " + state.vaultUri : "No permanent vault location recorded yet.";
   if (state.covenant) {
     $("inh-mode").value = state.covenant.mode;
     $("inh-heir").value = state.covenant.heir || "";
@@ -361,6 +467,7 @@ function render() {
     }
     tl.append(li);
   });
+  renderReadiness();
   renderStats();
 }
 
@@ -406,6 +513,12 @@ function bind() {
   $("btn-anchor").addEventListener("click", anchorOnChain);
   $("btn-inherit").addEventListener("click", sealCovenant);
   $("btn-genkey").addEventListener("click", generateHeirKey);
+  $("btn-verify").addEventListener("click", verifyOnChain);
+  $("btn-save-vault").addEventListener("click", saveVaultUri);
+  $("cp-pass").addEventListener("input", () => {
+    const s = passphraseStrength($("cp-pass").value);
+    $("cp-strength").textContent = $("cp-pass").value ? "Passphrase strength: " + s.label : "";
+  });
   $("btn-export").addEventListener("click", exportContinuum);
   $("btn-reset").addEventListener("click", resetContinuum);
   ["calc-n", "calc-y", "calc-anchor", "calc-legacy"].forEach((id) =>

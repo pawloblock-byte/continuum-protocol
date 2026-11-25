@@ -110,16 +110,28 @@
         </div>
       </div>
 
+      <div class="panel wide" id="readiness">
+        <div class="row between">
+          <h4>Legacy readiness</h4>
+          <span id="ready-score" class="pill">0 / 5</span>
+        </div>
+        <ul id="ready-list" class="checklist"></ul>
+        <div id="next-step" class="next-step"></div>
+      </div>
+
       <div class="panels">
         <div class="panel">
           <h4>Checkpoint consciousness</h4>
           <p class="muted small">Compress + encrypt the current state vector and commit its hash.</p>
           <input id="cp-note" type="text" placeholder="What is this moment? (e.g. finished first project)" />
           <input id="cp-pass" type="password" placeholder="Passphrase (encrypts your state locally)" />
+          <div id="cp-strength" class="small muted"></div>
           <div class="row">
             <button id="btn-checkpoint" class="btn primary sm">Create checkpoint</button>
             <button id="btn-anchor" class="btn ghost sm" title="Writes the state hash to Solana Devnet via the Memo program">Anchor on-chain</button>
+            <button id="btn-verify" class="btn ghost sm" title="Re-read the memo transaction from Solana and compare hashes">Verify on-chain</button>
           </div>
+          <div id="verify-out" class="mono small muted break"></div>
           <div id="anchor-out" class="mono small break muted"></div>
         </div>
 
@@ -142,6 +154,16 @@
           <button id="btn-inherit" class="btn ghost sm">Seal covenant</button>
           <div id="inh-out" class="mono small muted"></div>
         </div>
+      </div>
+
+      <div class="panel wide">
+        <div class="row between">
+          <h4>Durable vault</h4>
+          <button id="btn-save-vault" class="btn ghost xs">Save location</button>
+        </div>
+        <p class="muted small">Solana proves <em>when</em> this Continuum was born and that its memory was not altered. The encrypted vault itself must live somewhere permanent. Upload the exported file to GitHub, Arweave or IPFS, then record its URL here — it is written into the next anchor.</p>
+        <input id="vault-uri" type="text" placeholder="https://… (permanent location of the vault file)" />
+        <div id="vault-out" class="mono small muted break"></div>
       </div>
 
       <div class="panel wide">

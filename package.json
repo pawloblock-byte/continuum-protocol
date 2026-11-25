@@ -6,11 +6,13 @@
   "description": "Persistent existence for AI agents on Solana",
   "license": "MIT",
   "scripts": {
-    "test": "node --test tests/core.test.mjs tests/crypto.test.mjs tests/site.test.mjs tests/app.boot.test.mjs tests/agent.test.mjs",
-    "check": "node --check app/app.js && node --check app/core.js && node --check app/recover.js && node --check agent/continuum-agent.mjs",
+    "test": "node --test tests/core.test.mjs tests/crypto.test.mjs tests/site.test.mjs tests/app.boot.test.mjs tests/agent.test.mjs tests/keeper.test.mjs tests/mcp.test.mjs",
+    "check": "node --check app/app.js && node --check app/core.js && node --check app/recover.js && node --check agent/continuum-agent.mjs && node --check agent/continuum-keeper.mjs && node --check agent/continuum-mcp.mjs",
     "start": "python3 -m http.server 8080 --directory app",
     "build": "npm run check && npm test",
-    "agent": "node agent/continuum-agent.mjs"
+    "agent": "node agent/continuum-agent.mjs",
+    "keeper": "node agent/continuum-keeper.mjs",
+    "mcp": "node agent/continuum-mcp.mjs"
   },
   "engines": {
     "node": ">=20"

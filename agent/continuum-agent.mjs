@@ -235,6 +235,21 @@ async function cmdStatus(a) {
   );
 }
 
+async function cmdKeygen(a) {
+  const out = a.out || "agent-key.json";
+  if (existsSync(out)) throw new Error("key file already exists: " + out);
+  const kp = Keypair.generate();
+  await writeFile(
+    out,
+    JSON.stringify(
+      { v: 1, type: "continuum-key", publicKey: kp.publicKey.toBase58(), secret: toB64(kp.secretKey), createdAt: Date.now() },
+      null,
+      2
+    ) + "\n"
+  );
+  console.log(JSON.stringify({ ok: true, out, publicKey: kp.publicKey.toBase58() }, null, 2));
+}
+
 async function cmdHeirKey(a) {
   const k = await genRecoveryKey();
   const payload = {
@@ -256,6 +271,7 @@ const HELP = `Continuum agent CLI
   node agent/continuum-agent.mjs anchor [--file ...] [--key ...] [--rpc URL]
   node agent/continuum-agent.mjs restore [--file ...] [--key ...] [--out state.json]
   node agent/continuum-agent.mjs status [--file ...]
+  node agent/continuum-agent.mjs keygen [--out agent-key.json]
   node agent/continuum-agent.mjs heir-key [--out heir-key.json]
 `;
 
@@ -268,6 +284,7 @@ async function main() {
     anchor: cmdAnchor,
     restore: cmdRestore,
     status: cmdStatus,
+    keygen: cmdKeygen,
     "heir-key": cmdHeirKey,
   };
   if (!cmd || cmd === "help" || !table[cmd]) {

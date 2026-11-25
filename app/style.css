@@ -165,3 +165,10 @@ textarea:focus{outline:none;border-color:rgba(0,229,160,.5)}
 input[type=file]{margin-top:.6rem;font-size:.82rem;color:var(--muted);max-width:100%}
 .keybox{margin-top:.8rem;padding-top:.8rem;border-top:1px dashed var(--line)}
 .keybox input{margin-top:.6rem}
+.checklist{list-style:none;margin:.8rem 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.5rem .9rem}
+.checklist li{font-size:.86rem;display:flex;gap:.5rem;align-items:flex-start}
+.checklist .mark{font-weight:800;width:1rem;flex:none}
+.checklist .done{color:var(--accent)}
+.checklist .todo{color:var(--danger)}
+.next-step{margin-top:.9rem;padding:.7rem .9rem;border:1px solid rgba(91,140,255,.3);background:rgba(91,140,255,.07);border-radius:10px;font-size:.86rem}
+.next-step b{color:var(--txt)}

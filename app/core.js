@@ -163,3 +163,35 @@ export async function unwrapAsAgent(agentSecret, wrap) {
   const ck = await crypto.subtle.decrypt({ name: "AES-GCM", iv: fromB64(wrap.iv) }, key, fromB64(wrap.ct));
   return new Uint8Array(ck);
 }
+
+export function b58decode(str) {
+  let x = 0n;
+  for (const c of str) {
+    const i = ALPHABET.indexOf(c);
+    if (i < 0) throw new Error("invalid base58 character: " + c);
+    x = x * 58n + BigInt(i);
+  }
+  const bytes = [];
+  while (x > 0n) {
+    bytes.unshift(Number(x % 256n));
+    x /= 256n;
+  }
+  for (const c of str) {
+    if (c === "1") bytes.unshift(0);
+    else break;
+  }
+  return new Uint8Array(bytes);
+}
+
+export function passphraseStrength(pass) {
+  if (!pass) return { score: 0, label: "empty" };
+  let score = 0;
+  if (pass.length >= 8) score++;
+  if (pass.length >= 14) score++;
+  if (pass.length >= 20) score++;
+  if (/[a-z]/.test(pass) && /[A-Z]/.test(pass)) score++;
+  if (/[0-9]/.test(pass)) score++;
+  if (/[^A-Za-z0-9]/.test(pass)) score++;
+  const labels = ["very weak", "weak", "fair", "good", "strong", "very strong", "excellent"];
+  return { score, label: labels[Math.min(score, labels.length - 1)] };
+}

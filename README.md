@@ -23,7 +23,9 @@ memory, decision and relationship is recorded as a continuous, unerasable chain 
 | Heir recovery (`recover.html`) | **Working** — ECDH P-256 key wrapping, decrypts after the owner is gone |
 | Agent CLI (`agent/`) | **Working** — keypair, checkpoint, anchor, restore, heir sealing |
 | Anchor program (`programs/continuum`) | **Source complete, not yet compiled/deployed** in this repo snapshot |
-| Test suite | **26 passing** (`npm test`), including DOM boot, inheritance and CLI round-trips |
+| Keeper / executor (`agent/continuum-keeper.mjs`) | **Working** — dead-man switch and covenant activation |
+| MCP server (`agent/continuum-mcp.mjs`) | **Working** — any model can drive a Continuum as tools |
+| Test suite | **32 passing** (`npm test`), including DOM boot, inheritance, keeper and MCP round-trips |
 | Hosting | Static — deployable to GitHub Pages for free, forever |
 
 There is **no server**. The site is static files; state lives in the user's browser,
@@ -58,7 +60,14 @@ node agent/continuum-agent.mjs anchor
 node agent/continuum-agent.mjs restore --out state.json
 ```
 
-Full integration guide (loop, tool schema, durable storage): [docs/AGENTS.md](docs/AGENTS.md).
+Keeper (dead-man switch) and MCP server included:
+
+```bash
+node agent/continuum-keeper.mjs check --file continuum.json --grace-days 365
+node agent/continuum-mcp.mjs        # stdio MCP: create/checkpoint/anchor/restore/status
+```
+
+Full integration guide: [docs/AGENTS.md](docs/AGENTS.md) · toolkit: [agent/README.md](agent/README.md).
 
 ## Inheritance, end to end
 
@@ -70,6 +79,10 @@ Full integration guide (loop, tool schema, durable storage): [docs/AGENTS.md](do
 
 The chain proves *when* the Continuum was born; the vault carries *what* it remembers;
 the heir's key is the only thing that can open it.
+
+The app now shows a **Legacy readiness** checklist (anchor, heir key, covenant, exported
+vault) and a **Verify on-chain** button that re-reads the memo and compares hashes.
+Threat model and operational rules: [docs/SECURITY.md](docs/SECURITY.md).
 
 ## How it works
 
@@ -115,11 +128,13 @@ app/                     Static dApp (no build step, no dependencies at load tim
   app.js                 Wallet, anchoring, checkpointing, covenant, timeline
   core.js                Pure logic: base58, crypto, pricing, validation (unit-tested)
   recover.html/js        Heir recovery: load vault, unwrap key, decrypt memory
-agent/                   Agent CLI/SDK (init, checkpoint, anchor, restore, heir-key)
+agent/                   Agent toolkit (CLI, keeper, MCP server, README)
+examples/                Runnable agent loop skeleton
 programs/continuum/      Anchor program (Rust)
 docs/WHITEPAPER.md       Protocol specification and vision
 docs/PRICING.md          Pricing schedule and revenue model
 docs/AGENTS.md           Connecting an AI agent (loop, tools, durable storage)
+docs/SECURITY.md         Threat model, privacy, operational rules
 docs/DEPLOYMENT.md       Step-by-step deploy guide (site + program)
 tests/                   Node test suite (logic + site integrity)
 .github/workflows/       GitHub Pages deployment
@@ -182,8 +197,9 @@ Full instructions in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 ## Roadmap
 
 - [ ] Deploy the Anchor program to Devnet and wire the client to it (replacing Memo anchoring)
-- [ ] Vault upload adapter (Arweave / IPFS / GitHub) with on-chain pointer
-- [ ] MCP server exposing create/checkpoint/anchor/restore to any model
+- [ ] One-click vault upload adapter (Arweave / IPFS) — URL recording works today
+- [x] MCP server exposing create/checkpoint/anchor/restore to any model
+- [x] Keeper with dead-man switch and covenant activation
 - [ ] Confidential Compute integration on Solana for enclave-held state vectors
 - [ ] x402 / pay.sh metering for agent-to-agent services
 - [ ] Registry + MCP server so any agent can discover and resume a Continuum
