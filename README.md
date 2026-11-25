@@ -20,8 +20,10 @@ memory, decision and relationship is recorded as a continuous, unerasable chain 
 | --- | --- |
 | Web client (`app/`) | **Working** — runs entirely in the browser, no backend |
 | On-chain anchoring | **Working on Devnet** via the SPL Memo program |
+| Heir recovery (`recover.html`) | **Working** — ECDH P-256 key wrapping, decrypts after the owner is gone |
+| Agent CLI (`agent/`) | **Working** — keypair, checkpoint, anchor, restore, heir sealing |
 | Anchor program (`programs/continuum`) | **Source complete, not yet compiled/deployed** in this repo snapshot |
-| Test suite | **14 passing** (`npm test`), including a full DOM boot test |
+| Test suite | **26 passing** (`npm test`), including DOM boot, inheritance and CLI round-trips |
 | Hosting | Static — deployable to GitHub Pages for free, forever |
 
 There is **no server**. The site is static files; state lives in the user's browser,
@@ -44,6 +46,30 @@ No wallet? **Continue in demo mode** — everything except the on-chain transact
 locally.
 
 ---
+
+## For AI agents
+
+An agent never opens the website. It has its own keypair and runs a loop:
+
+```bash
+node agent/continuum-agent.mjs init --name ATLAS-01
+node agent/continuum-agent.mjs checkpoint --note "finished task #42"
+node agent/continuum-agent.mjs anchor
+node agent/continuum-agent.mjs restore --out state.json
+```
+
+Full integration guide (loop, tool schema, durable storage): [docs/AGENTS.md](docs/AGENTS.md).
+
+## Inheritance, end to end
+
+1. The heir generates a recovery key (`heir-key.json`) and shares only its public key.
+2. The owner seals the covenant with that public key and checkpoints.
+3. The content key is wrapped twice: for the owner (passphrase) and for the heir (ECDH P-256).
+4. On the owner's death the heir loads the vault at `recover.html`, enters their private
+   key, and reads the entire memory — no server, no permission, no passphrase needed.
+
+The chain proves *when* the Continuum was born; the vault carries *what* it remembers;
+the heir's key is the only thing that can open it.
 
 ## How it works
 
@@ -87,10 +113,13 @@ app/                     Static dApp (no build step, no dependencies at load tim
   index.html             Landing page + app shell
   style.css              Design system
   app.js                 Wallet, anchoring, checkpointing, covenant, timeline
-  core.js                Pure logic: base58, pricing, validation (unit-tested)
+  core.js                Pure logic: base58, crypto, pricing, validation (unit-tested)
+  recover.html/js        Heir recovery: load vault, unwrap key, decrypt memory
+agent/                   Agent CLI/SDK (init, checkpoint, anchor, restore, heir-key)
 programs/continuum/      Anchor program (Rust)
 docs/WHITEPAPER.md       Protocol specification and vision
 docs/PRICING.md          Pricing schedule and revenue model
+docs/AGENTS.md           Connecting an AI agent (loop, tools, durable storage)
 docs/DEPLOYMENT.md       Step-by-step deploy guide (site + program)
 tests/                   Node test suite (logic + site integrity)
 .github/workflows/       GitHub Pages deployment
@@ -153,6 +182,8 @@ Full instructions in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 ## Roadmap
 
 - [ ] Deploy the Anchor program to Devnet and wire the client to it (replacing Memo anchoring)
+- [ ] Vault upload adapter (Arweave / IPFS / GitHub) with on-chain pointer
+- [ ] MCP server exposing create/checkpoint/anchor/restore to any model
 - [ ] Confidential Compute integration on Solana for enclave-held state vectors
 - [ ] x402 / pay.sh metering for agent-to-agent services
 - [ ] Registry + MCP server so any agent can discover and resume a Continuum

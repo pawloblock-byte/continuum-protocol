@@ -1,4 +1,7 @@
-import { b58, fmtAge, eventIcon, priceTotal, isValidContinuum } from "./core.js";
+import {
+  b58, fmtAge, eventIcon, priceTotal, isValidContinuum,
+  toB64, fromB64, sha256Hex, gzipBytes, sealBlob, wrapForOwner, wrapContentKeyForHeir, genRecoveryKey,
+} from "./core.js";
 
 const MEMO_PROGRAM_ID = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
 const RPC_ENDPOINT = "https://api.devnet.solana.com";
@@ -8,60 +11,6 @@ const STORE_KEY = "continuum.v1";
 const $ = (id) => document.getElementById(id);
 const enc = new TextEncoder();
 const dec = new TextDecoder();
-
-async function sha256(bytes) {
-  const d = await crypto.subtle.digest("SHA-256", bytes);
-  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function toB64(bytes) {
-  let s = "";
-  for (const b of bytes) s += String.fromCharCode(b);
-  return btoa(s);
-}
-
-function fromB64(b64) {
-  const s = atob(b64);
-  const out = new Uint8Array(s.length);
-  for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
-  return out;
-}
-
-async function gzipBytes(bytes) {
-  if (!("CompressionStream" in window)) return bytes;
-  const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"));
-  return new Uint8Array(await new Response(stream).arrayBuffer());
-}
-
-async function gunzipBytes(bytes) {
-  if (!("DecompressionStream" in window)) return bytes;
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
-  return new Uint8Array(await new Response(stream).arrayBuffer());
-}
-
-async function deriveKey(passphrase, salt) {
-  const base = await crypto.subtle.importKey("raw", enc.encode(passphrase), "PBKDF2", false, ["deriveKey"]);
-  return crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt, iterations: 120000, hash: "SHA-256" },
-    base,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"]
-  );
-}
-
-async function encryptState(payload, passphrase, salt) {
-  const key = await deriveKey(passphrase, salt);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, payload);
-  return { alg: "AES-GCM-256/PBKDF2", iv: toB64(iv), ct: toB64(new Uint8Array(ct)) };
-}
-
-async function decryptState(record, passphrase, salt) {
-  const key = await deriveKey(passphrase, salt);
-  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: fromB64(record.iv) }, key, fromB64(record.ct));
-  return new Uint8Array(pt);
-}
 
 let state = null;
 let wallet = null;
@@ -165,6 +114,10 @@ async function checkpoint() {
   if (!state) return;
   const note = ($("cp-note").value || "").trim();
   const passphrase = $("cp-pass").value;
+  if (!passphrase) {
+    toast("Set a passphrase — it is how you (and only you) reopen this state.", true);
+    return;
+  }
   const entry = {
     t: Date.now(),
     note: note || "Routine consciousness checkpoint",
@@ -174,41 +127,37 @@ async function checkpoint() {
   if (state.memory.length > 500) state.memory = state.memory.slice(-500);
 
   const snapshot = {
-    v: 1,
+    v: 2,
     anchor: state.anchor,
     owner: state.owner,
     name: state.name,
     ts: entry.t,
     memory: state.memory,
     covenant: state.covenant,
+    heirPub: state.heirPub || null,
   };
   const compressed = await gzipBytes(enc.encode(JSON.stringify(snapshot)));
 
-  let commitment;
-  let record;
-  if (passphrase) {
-    const salt = await crypto.subtle.digest("SHA-256", enc.encode(state.anchor));
-    const encrypted = await encryptState(compressed, passphrase, new Uint8Array(salt));
-    record = { v: 1, alg: encrypted.alg, iv: encrypted.iv, ct: encrypted.ct };
-    commitment = await sha256(fromB64(encrypted.ct));
-  } else {
-    record = { v: 1, alg: "gzip+base64", data: toB64(compressed) };
-    commitment = await sha256(compressed);
-  }
+  const ck = crypto.getRandomValues(new Uint8Array(32));
+  const blob = await sealBlob(ck, compressed);
+  const salt = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(state.anchor)));
+  const ownerWrap = await wrapForOwner(ck, passphrase, salt);
+  const heirWrap = state.heirPub ? await wrapContentKeyForHeir(state.heirPub, ck) : null;
+  const commitment = await sha256Hex(fromB64(blob.ct));
 
   state.checkpoints += 1;
   state.lastHash = commitment;
-  state.lastSnapshot = record;
+  state.lastSnapshot = { v: 2, alg: blob.alg, iv: blob.iv, ct: blob.ct, owner: ownerWrap, heir: heirWrap };
   state.events.push({
     t: entry.t,
     type: "checkpoint",
-    note: entry.note + (passphrase ? " · encrypted" : " · uncompressed passphrase"),
+    note: entry.note + (heirWrap ? " · sealed for heir" : " · owner-only"),
     hash: commitment,
   });
   $("cp-note").value = "";
   save();
   render();
-  toast("Checkpoint #" + state.checkpoints + " sealed. Commitment " + commitment.slice(0, 12) + "…");
+  toast("Checkpoint #" + state.checkpoints + " sealed" + (heirWrap ? " and wrapped for your heir" : "") + ".");
 }
 
 async function anchorOnChain() {
@@ -274,11 +223,46 @@ async function anchorOnChain() {
   }
 }
 
+async function generateHeirKey() {
+  try {
+    const key = await genRecoveryKey();
+    const payload = {
+      v: 1,
+      type: "continuum-heir-key",
+      note: "Give this file to your heir. Keep it offline. Anyone with it can read your sealed memory.",
+      pub: key.pub,
+      priv: key.priv,
+      createdAt: Date.now(),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "heir-key-" + (state?.name || "continuum").replace(/[^a-z0-9]/gi, "_").toLowerCase() + ".json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    $("inh-pub").value = key.pub;
+    $("key-out").textContent = "Recovery key generated. Private file downloaded — give it to your heir. Public: " + key.pub.slice(0, 18) + "…";
+    toast("Heir recovery key generated and downloaded.");
+  } catch (e) {
+    toast("Key generation failed: " + e.message, true);
+  }
+}
+
 function sealCovenant() {
   if (!state) return;
   const mode = $("inh-mode").value;
   const heir = ($("inh-heir").value || "").trim();
-  state.covenant = { mode, heir: heir || null, sealedAt: Date.now() };
+  const heirPub = ($("inh-pub").value || "").trim();
+  if (heirPub) {
+    try {
+      if (fromB64(heirPub).length !== 65) throw new Error("bad length");
+    } catch {
+      toast("That heir recovery key is not valid (expected a P-256 public key).", true);
+      return;
+    }
+    state.heirPub = heirPub;
+  }
+  state.covenant = { mode, heir: heir || null, heirPub: state.heirPub || null, sealedAt: Date.now() };
   state.events.push({
     t: Date.now(),
     type: "covenant",
@@ -421,6 +405,7 @@ function bind() {
   $("btn-checkpoint").addEventListener("click", checkpoint);
   $("btn-anchor").addEventListener("click", anchorOnChain);
   $("btn-inherit").addEventListener("click", sealCovenant);
+  $("btn-genkey").addEventListener("click", generateHeirKey);
   $("btn-export").addEventListener("click", exportContinuum);
   $("btn-reset").addEventListener("click", resetContinuum);
   ["calc-n", "calc-y", "calc-anchor", "calc-legacy"].forEach((id) =>

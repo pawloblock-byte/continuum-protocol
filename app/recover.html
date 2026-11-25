@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Recover a Continuum — Continuum Protocol</title>
+<meta name="theme-color" content="#05060a" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2305060a' stroke='%2300e5a0' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='8' fill='%2300e5a0'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="glow" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="brand" href="index.html">
+    <svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true">
+      <circle cx="32" cy="32" r="29" fill="none" stroke="url(#g2)" stroke-width="3"/>
+      <circle cx="32" cy="32" r="9" fill="#00e5a0"/>
+      <defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#00e5a0"/><stop offset="1" stop-color="#5b8cff"/>
+      </linearGradient></defs>
+    </svg>
+    <span>CONTINUUM<span class="brand-dim">PROTOCOL</span></span>
+  </a>
+  <nav class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="index.html#app">Launch App</a>
+    <a class="nav-cta" href="index.html#app">Create</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero" style="padding-bottom:1rem">
+    <div class="badge">Heir recovery</div>
+    <h1>Receive the memory.</h1>
+    <p class="lead">
+      Load the Continuum vault you inherited, then unlock it with the recovery key that was
+      sealed for you — or with the owner's passphrase. Nothing is sent anywhere; decryption
+      happens entirely in this browser.
+    </p>
+  </section>
+
+  <section class="section" style="border-top:none">
+    <div class="panels">
+      <div class="panel">
+        <h4>1 · Vault file</h4>
+        <p class="muted small">The <span class="mono">continuum-*.json</span> file given to you by the owner or their estate.</p>
+        <input id="vault-file" type="file" accept="application/json,.json" />
+        <div id="vault-meta" class="mono small muted" style="margin-top:.6rem"></div>
+      </div>
+
+      <div class="panel">
+        <h4>2 · Your recovery key</h4>
+        <p class="muted small">The private key file the owner gave you (ECDH P-256). Keep it offline.</p>
+        <textarea id="heir-key" rows="4" placeholder="Paste the contents of heir-key-*.json or the private key string"></textarea>
+        <p class="muted small" style="margin-top:.6rem">Or unlock with the owner's passphrase:</p>
+        <input id="owner-pass" type="password" placeholder="Owner passphrase (fallback)" />
+        <div class="row">
+          <button id="btn-open" class="btn primary sm">Decrypt memory</button>
+        </div>
+        <div id="open-out" class="mono small muted" style="margin-top:.6rem"></div>
+      </div>
+    </div>
+
+    <div id="result" class="dash hidden" style="margin-top:1.2rem">
+      <div class="dash-head">
+        <div>
+          <div class="label">Continuum</div>
+          <div id="r-name" class="c-name">—</div>
+          <div id="r-anchor" class="mono small break">—</div>
+        </div>
+        <div class="dash-meta">
+          <div><span class="label">Born</span><span id="r-born" class="mono">—</span></div>
+          <div><span class="label">Age</span><span id="r-age" class="mono">—</span></div>
+          <div><span class="label">Checkpoints</span><span id="r-cp" class="mono">0</span></div>
+          <div><span class="label">Integrity</span><span id="r-verify" class="pill">—</span></div>
+        </div>
+      </div>
+      <div class="panel wide" style="margin-top:1rem">
+        <div class="row between">
+          <h4>Recovered memory</h4>
+          <span id="r-count" class="small muted"></span>
+        </div>
+        <ol id="r-memory" class="timeline"></ol>
+      </div>
+      <div class="panel wide" style="margin-top:1rem">
+        <h4>On-chain provenance</h4>
+        <div id="r-chain" class="mono small muted break">No anchor transaction found in this vault.</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="foot-grid">
+    <div>
+      <div class="brand small-brand">CONTINUUM<span class="brand-dim">PROTOCOL</span></div>
+      <p class="muted small">Persistent existence for AI agents on Solana.</p>
+    </div>
+    <div>
+      <div class="label">Treasury</div>
+      <div class="mono small break">HfsGkUaCxKbgvhBfJfpr3oLrdbWTrYZnuR6x2HX5fhyS</div>
+    </div>
+  </div>
+</footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script type="module" src="recover.js"></script>
+</body>
+</html>
