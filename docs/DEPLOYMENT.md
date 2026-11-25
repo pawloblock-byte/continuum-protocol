@@ -73,6 +73,6 @@ needed by the client or by any server.
 ## 4. Verification
 
 ```bash
-npm test      # 13 tests: logic, pricing, site integrity
+npm test      # 14 tests: logic, pricing, site integrity, DOM boot
 npm run check # syntax check of the client
 ```

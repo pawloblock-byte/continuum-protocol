@@ -133,7 +133,7 @@ async function createContinuum() {
   const nonce = crypto.getRandomValues(new Uint8Array(16));
   const born = Date.now();
   const seed = enc.encode(owner + "|" + name + "|" + born + "|" + toB64(nonce));
-  const anchor = b58(await crypto.subtle.digest("SHA-256", seed));
+  const anchor = b58(new Uint8Array(await crypto.subtle.digest("SHA-256", seed)));
 
   state = {
     v: 1,
@@ -220,9 +220,10 @@ async function anchorOnChain() {
   const out = $("anchor-out");
   out.textContent = "Preparing transaction…";
   try {
-    const { Connection, PublicKey, Transaction, TransactionInstruction } = await import(
-      "https://esm.sh/@solana/web3.js@1.95.3"
-    );
+    const [{ Connection, PublicKey, Transaction, TransactionInstruction }, { Buffer }] = await Promise.all([
+      import("https://esm.sh/@solana/web3.js@1.95.3"),
+      import("https://esm.sh/buffer@6.0.3"),
+    ]);
     const connection = new Connection(RPC_ENDPOINT, "confirmed");
     const pk = new PublicKey(wallet.address);
     const balance = await connection.getBalance(pk);
@@ -242,7 +243,7 @@ async function anchorOnChain() {
     const ix = new TransactionInstruction({
       keys: [{ pubkey: pk, isSigner: true, isWritable: false }],
       programId: new PublicKey(MEMO_PROGRAM_ID),
-      data: enc.encode(memo),
+      data: Buffer.from(enc.encode(memo)),
     });
     const tx = new Transaction().add(ix);
     tx.feePayer = pk;

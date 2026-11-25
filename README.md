@@ -21,7 +21,7 @@ memory, decision and relationship is recorded as a continuous, unerasable chain 
 | Web client (`app/`) | **Working** — runs entirely in the browser, no backend |
 | On-chain anchoring | **Working on Devnet** via the SPL Memo program |
 | Anchor program (`programs/continuum`) | **Source complete, not yet compiled/deployed** in this repo snapshot |
-| Test suite | **13 passing** (`npm test`) |
+| Test suite | **14 passing** (`npm test`), including a full DOM boot test |
 | Hosting | Static — deployable to GitHub Pages for free, forever |
 
 There is **no server**. The site is static files; state lives in the user's browser,
